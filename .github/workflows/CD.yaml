@@ -1,0 +1,47 @@
+name: Bridge - CD
+on:
+  push:
+    branches:
+      - main
+jobs:
+  event-bridge-build:
+    env:
+      FLEET_MANAGER_CONTAINER_NAME: quay.io/5733d9e2be6485d52ffa08870cabdee0/fleet-manager:${{ github.sha }}
+      FLEET_SHARD_OPENSHIFT_CONTAINER_NAME: quay.io/5733d9e2be6485d52ffa08870cabdee0/fleet-shard:ocp-${{ github.sha }}
+      FLEET_SHARD_MINIKUBE_CONTAINER_NAME: quay.io/5733d9e2be6485d52ffa08870cabdee0/fleet-shard:k8s-${{ github.sha }}
+      EXECUTOR_CONTAINER_NAME: quay.io/5733d9e2be6485d52ffa08870cabdee0/executor:${{ github.sha }}
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    name: Patch Kustomize
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      # run only if 'manager' or any 'general' modules have changed
+
+      - name: Build and Publish JVM Container - Fleet Manager
+        run: |
+          python .github/scripts/patch_kustomize_images.py $FLEET_MANAGER_CONTAINER_NAME-jvm fleet_manager
+
+      # run only if 'shard-operator' or any 'general' modules have changed
+      - name: Build and Publish JVM Container - Fleet Shard
+        if: steps.filter.outputs.shard-operator == 'true'
+        run: |
+          python .github/scripts/patch_kustomize_images.py $FLEET_SHARD_OPENSHIFT_CONTAINER_NAME-jvm fleet_shard
+
+
+      # run only if 'executor' or any 'general' modules have changed
+      - name: Build and Publish JVM Container - Executor
+        if: steps.filter.outputs.executor == 'true'
+        run: |
+          python .github/scripts/patch_kustomize_images.py $EXECUTOR_CONTAINER_NAME-jvm executor
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+            commit-message: Update kustomization images ${{ github.sha }}
+            title: Update kustomization images ${{ github.sha }}
+            body: Update kustomization images ${{ github.sha }}
+            base: main
+            labels: automated-pr
+            branch: update-kustomization-images-${{ github.sha }}
+            delete-branch: true

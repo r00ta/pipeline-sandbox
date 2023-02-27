@@ -5,7 +5,7 @@ import yaml
 def patch_fleet_manager(image: str):
 
     # Extract only the image tag
-    tag = image.split("-")[1]
+    tag = image.split("fleet-manager:")[1]
 
     # prod overlay
     with open("kustomize/base-openshift/kustomization.yaml", "r") as stream:
@@ -38,7 +38,7 @@ def patch_fleet_manager(image: str):
 def patch_fleet_shard(image: str):
 
     # Extract only the image tag
-    tag = image.split("-")[1]
+    tag = image.split("fleet-shard:")[1]
 
     # base overlay
     with open("kustomize/base-openshift/kustomization.yaml", "r") as stream:
@@ -49,7 +49,7 @@ def patch_fleet_shard(image: str):
             sys.exit(1)
     
     shard = next(filter(lambda x: x['name'] == 'event-bridge-shard-operator', base_kustomization['images']))
-    shard['newTag'] = "ocp-" + tag + "-jvm"
+    shard['newTag'] = tag
     
     with open('kustomize/base-openshift/kustomization.yaml', 'w') as outfile:
         yaml.dump(base_kustomization, outfile)
@@ -63,7 +63,7 @@ def patch_fleet_shard(image: str):
             sys.exit(1)
     
     shard = next(filter(lambda x: x['name'] == 'event-bridge-shard-operator', prod_kustomization['images']))
-    shard['newTag'] = "ocp-" + tag + "-jvm"
+    shard['newTag'] = tag
 
     with open('kustomize/overlays/prod/kustomization.yaml', 'w') as outfile:
         yaml.dump(prod_kustomization, outfile)
@@ -78,7 +78,7 @@ def patch_fleet_shard(image: str):
 
     # Shard
     shard = next(filter(lambda x: x['name'] == 'event-bridge-shard-operator', ci_kustomization['images']))
-    shard['newTag'] = "k8s-" + tag + "-jvm"
+    shard['newTag'] = tag.replace("ocp-", "k8s-")
 
     with open('kustomize/overlays/ci/kustomization.yaml', 'w') as outfile:
         yaml.dump(ci_kustomization, outfile)

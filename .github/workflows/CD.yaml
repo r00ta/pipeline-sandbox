@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+pull-requests: write
 jobs:
   event-bridge-build:
     env:
@@ -24,14 +25,12 @@ jobs:
 
       # run only if 'shard-operator' or any 'general' modules have changed
       - name: Build and Publish JVM Container - Fleet Shard
-        if: steps.filter.outputs.shard-operator == 'true'
         run: |
           python .github/scripts/patch_kustomize_images.py $FLEET_SHARD_OPENSHIFT_CONTAINER_NAME-jvm fleet_shard
 
 
       # run only if 'executor' or any 'general' modules have changed
       - name: Build and Publish JVM Container - Executor
-        if: steps.filter.outputs.executor == 'true'
         run: |
           python .github/scripts/patch_kustomize_images.py $EXECUTOR_CONTAINER_NAME-jvm executor
 

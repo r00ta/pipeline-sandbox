@@ -5,6 +5,7 @@ on:
       - main
 permissions:
   pull-requests: write
+  contents: write
 jobs:
   event-bridge-build:
     env:

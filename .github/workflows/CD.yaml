@@ -3,7 +3,8 @@ on:
   push:
     branches:
       - main
-pull-requests: write
+permissions:
+  pull-requests: write
 jobs:
   event-bridge-build:
     env:
